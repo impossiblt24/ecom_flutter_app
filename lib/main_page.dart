@@ -1,3 +1,4 @@
+import 'package:cuoiky/auth_page.dart';
 import 'package:cuoiky/home_page.dart';
 import 'package:cuoiky/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,7 +16,7 @@ class MainPage extends StatelessWidget {
           if (snapshot.hasData) {
             return HomePage();
           } else {
-            return LoginPage();
+            return AuthPage();
           }
         },
       ),

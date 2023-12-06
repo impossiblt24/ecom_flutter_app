@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_final_fields, unused_field, dead_code, use_build_context_synchronously
 
 import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:firebase_core/firebase_core.dart';
@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  final VoidCallback showRegisterPage;
+
+  const LoginPage({Key? key, required this.showRegisterPage}) : super(key: key);
+
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -14,17 +17,54 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
 
+  bool _isSecurePassword = true;
+
   //Controller
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   //sign in
-  Future signIn() async {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim()
+  void signIn() async {
+
+    showDialog(
+      context: context,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      )
     );
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim()
+      );
+
+      if (context.mounted) Navigator.pop(context);
+
+    } on FirebaseAuthException catch (e) {
+      Navigator.pop(context);
+      displayMessage(e.code);
+    }
+
+    // void displayMessage(String message) {
+    //   showDialog(
+    //     context: context,
+    //     builder: (context) => AlertDialog(
+    //     title: Text(message),
+    //   )
+    // );
+    // }
+
   }
+
+  void displayMessage(String message) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+        title: Text(message),
+      )
+    );
+    }
 
   @override
   void dispose(){
@@ -33,9 +73,22 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Widget togglePassword(){
+      return IconButton(
+        onPressed: (){
+          setState(() {
+            _isSecurePassword =! _isSecurePassword;
+          });   
+        },
+        icon: _isSecurePassword ? Icon(Icons.visibility_off) : Icon(Icons.visibility),
+        color: Colors.grey,
+      );
+    }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       backgroundColor: Colors.grey[800],
       body: SafeArea(
         child: Center(
@@ -110,10 +163,13 @@ class _LoginPageState extends State<LoginPage> {
                       padding: const EdgeInsets.only(left: 20),
                       child: TextField(
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: _isSecurePassword,
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: "Password",
+                          
+                          suffixIcon: togglePassword(),
+                           
                         ),
                       ),
                     ),
@@ -157,11 +213,14 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      "Register Now?",
-                      style: TextStyle(
-                        color: Colors.cyan,
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: widget.showRegisterPage,
+                      child: Text(
+                        "Register Now?",
+                        style: TextStyle(
+                          color: Colors.cyan,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -172,5 +231,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+
+    
   }
 }
